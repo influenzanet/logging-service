@@ -20,20 +20,14 @@ type LogDBService struct {
 }
 
 func NewLogDBService(configs types.DBConfig) *LogDBService {
-	var err error
-	dbClient, err := mongo.NewClient(
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(configs.Timeout)*time.Second)
+	defer cancel()
+
+	dbClient, err := mongo.Connect(ctx,
 		options.Client().ApplyURI(configs.URI),
 		options.Client().SetMaxConnIdleTime(time.Duration(configs.IdleConnTimeout)*time.Second),
 		options.Client().SetMaxPoolSize(configs.MaxPoolSize),
 	)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(configs.Timeout)*time.Second)
-	defer cancel()
-
-	err = dbClient.Connect(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
